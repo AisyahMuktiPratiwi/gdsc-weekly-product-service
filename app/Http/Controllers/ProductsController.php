@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Products ;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 
 class ProductsController extends Controller
 {
@@ -19,22 +20,19 @@ class ProductsController extends Controller
        
         $products = Products::select('id','name','description','thumbnailURL','userID')->get();
 
-        $usersResponse = Http::get('http://localhost:3000/users');
-        $users = $usersResponse->json();
-    
-
-        $mergedData = $products->map(function ($product) use ($users) {
-            $userproduct = collect($users['data'])->firstWhere('id', $product['userID']);
-            $product['username'] = $userproduct['username'] ?? null;
-            unset($product['userID']); 
-            return $product;
-        });
-    
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $mergedData 
-        ], 200);
+        if($products->count()>0){
+            return response()->json([
+                'status' => 'success',
+                'data' => $products 
+            ], 200);
+            
+        }else{
+            return response()->json([
+                'status' => 404,
+                'data' => 'No records found' 
+            ], 404);
+            
+        }
         
     }
     
@@ -48,30 +46,46 @@ class ProductsController extends Controller
      */
     public function store(Request $request)
     {
-        $product = new Products();
-        $product->id = $request->id;
-        $product->userID = $request->userID;
-        $product->name = $request->name;
-        $product->description = $request->description;
-        $product->thumbnailURL = $request->thumbnailURL;
+        $validator =Validator::make($request->all(),[
+            
+            'name'=>'required',
+            'description'=>'required',
+            'thumbnailURL'=>'required',
+            'userID'=>'required',
+        ]);
         
-        $product->save();
 
+        if($validator->fails()){
+            return response()->json([
+                'status'=>'422',
+                'errors'=>$validator->messages()
+            ], 422);
+        }else{
+
+            $product =Products::create([
+            
+                'name' => $request->name,
+                'description' => $request->description,
+                'thumbnailURL' => $request->thumbnailURL,
+                'userID' => $request->userID,
+            ]);
+        }
+        
         unset($product['created_at']);
         unset($product['updated_at']);
 
-        $usersResponse = Http::get('http://localhost:3000/users');
-        $users = $usersResponse->json();
+        if($product){
+            return response()->json([
+                'status'=>'success',
+                'data'=>$product
+            ], 200);
+        }else{
+            return response()->json([
+                'status'=>500,
+                'message'=>"something went wrong"
+            ], 200);
+        }
 
-        $user = collect($users['data'])->firstWhere('id', $product['userID']);
-        $product['username'] = $user['username'] ?? null;
-        unset($product['userID']); 
-
-        
-        return response()->json([
-            'status'=>'success',
-            'data'=>$product
-        ], 200);
     }
 
     /**
@@ -89,22 +103,13 @@ class ProductsController extends Controller
                 'status' => 'success',
                 'message' => 'Product not found',
                 'data' => null
-            ], 200);
-        }
-    
-        $usersResponse = Http::get('http://localhost:3000/users');
-        $users = $usersResponse->json();
-
-        $user = collect($users['data'])->firstWhere('id', $product['userID']);
-        $product['username'] = $user['username'] ?? null;
-        unset($product['userID']); 
-
-      
-        
+            ], 404);
+        }else{
         return response()->json([
             'status' => 'success',
             'data' => $product
         ], 200);
+        }
 
     }
 
