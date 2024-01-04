@@ -29,7 +29,7 @@ class ProductsController extends Controller
         }else{
             return response()->json([
                 'status' => 404,
-                'data' => 'No records found' 
+                'data' => 'data not found' 
             ], 404);
             
         }
@@ -68,6 +68,7 @@ class ProductsController extends Controller
                 'description' => $request->description,
                 'thumbnailURL' => $request->thumbnailURL,
                 'userID' => $request->userID,
+
             ]);
         }
         
@@ -83,7 +84,7 @@ class ProductsController extends Controller
             return response()->json([
                 'status'=>500,
                 'message'=>"something went wrong"
-            ], 200);
+            ], 500);
         }
 
     }
@@ -100,9 +101,8 @@ class ProductsController extends Controller
 
         if (!$product) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'Product not found',
-                'data' => null
+                'status' => '404',
+                'message' => 'data not found',
             ], 404);
         }else{
         return response()->json([
@@ -137,8 +137,8 @@ class ProductsController extends Controller
 
         if (!$product){
             return response()->json([
-                'status'=>'error',
-                'massage'=>'Data not found'
+                'status'=>'404',
+                'message'=>'Data not found'
             ], 404);
 
         }
@@ -147,7 +147,7 @@ class ProductsController extends Controller
 
         return response()->json([
             'status'=>'success',
-            'massage'=>'any'
+            'message'=>'Product deleted successfully'
         ],200);
 
     }
